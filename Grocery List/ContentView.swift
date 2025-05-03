@@ -1,58 +1,95 @@
-//
-//  ContentView.swift
-//  Grocery List
-//
-//  Created by Vadim Vinogradov on 4/29/25.
-//
-
 import SwiftUI
 import SwiftData
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
-    @Query private var item: [Item]
+    @Query private var items: [Item]
+    
+    func addEssentialFoods() {
+        let foods = [
+            Item(title: "Bakety & Bread", isCompleted: false),
+            Item(title: "Dairy", isCompleted: true),
+            Item(title: "Meat & Seafood", isCompleted: .random()),
+            Item(title: "Produce", isCompleted: .random()),
+            Item(title: "Pantry", isCompleted: .random())
+        ]
+        for food in foods {
+            modelContext.insert(food)
+        }
+    }
     
     var body: some View {
         NavigationStack {
             List {
-                ForEach(item) { item in
+                ForEach(items) { item in
                     Text(item.title)
                         .font(.title.weight(.light))
                         .padding(.vertical, 2)
-                        .foregroundStyle(item.isCompleted == false ? Color.primary : Color.accentColor)
+                        .foregroundStyle(item.isCompleted ? Color.accentColor : Color.primary)
                         .strikethrough(item.isCompleted)
                         .italic(item.isCompleted)
-                }
+                        .swipeActions {
+                            Button(role: .destructive) {
+                                withAnimation {
+                                    modelContext.delete(item)
+                                }
+                            } label: {
+                                Label("Delete", systemImage: "trash")
+                            }
+                        } //: SWIPE
+                        .swipeActions(edge: .leading) {
+                            Button {
+                                item.isCompleted.toggle()
+                            } label: {
+                                Label("Done", systemImage: item.isCompleted ? "checkmark.circle" : "x.circle")
+                            }
+                            .tint(item.isCompleted ? .green : .accentColor)
+                        } //: SWIPE
+                } //: FOREACH
             } //: LIST
             .navigationTitle("Grocery List")
-            .overlay {
-                if item.isEmpty {
-                    ContentUnavailableView("Empty Cart", systemImage: "cart.circle", description: Text("Add some items to your cart"))
+            .toolbar {
+                if items.isEmpty {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button(action: addEssentialFoods) {
+                            Label("Essential Foods", systemImage: "carrot")
+                        }
+                    }
                 }
- 
+            }
+            .overlay {
+                if items.isEmpty {
+                    ContentUnavailableView(
+                        "Empty Cart",
+                        systemImage: "cart.circle",
+                        description: Text("Add some items to your cart")
+                    )
+                }
             }
         }
     }
 }
 
 #Preview("Sample Data") {
-    let sampleData: [Item] = [
+    let sampleData = [
         Item(title: "Bakety & Bread", isCompleted: false),
         Item(title: "Dairy", isCompleted: true),
         Item(title: "Meat & Seafood", isCompleted: .random()),
         Item(title: "Produce", isCompleted: .random()),
-        Item(title: "Pantry", isCompleted: .random()),
+        Item(title: "Pantry", isCompleted: .random())
     ]
     
-    let container = try! ModelContainer(for: Item.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+    let container = try! ModelContainer(
+        for: Item.self,
+        configurations: ModelConfiguration(isStoredInMemoryOnly: true)
+    )
     
     for item in sampleData {
         container.mainContext.insert(item)
     }
-
+    
     return ContentView()
         .modelContainer(container)
-        
 }
 
 #Preview("Empty List") {
