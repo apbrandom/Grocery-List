@@ -5,6 +5,10 @@ struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var items: [Item]
     
+    @State private var newItemTitle: String = ""
+    
+    @FocusState private var isFocused: Bool
+    
     func addEssentialFoods() {
         let foods = [
             Item(title: "Bakety & Bread", isCompleted: false),
@@ -41,9 +45,9 @@ struct ContentView: View {
                             Button {
                                 item.isCompleted.toggle()
                             } label: {
-                                Label("Done", systemImage: item.isCompleted ? "checkmark.circle" : "x.circle")
+                                Label("Done", systemImage: item.isCompleted ? "x.circle" : "checkmark.circle")
                             }
-                            .tint(item.isCompleted ? .green : .accentColor)
+                            .tint(item.isCompleted ? .accentColor : .green)
                         } //: SWIPE
                 } //: FOREACH
             } //: LIST
@@ -66,6 +70,34 @@ struct ContentView: View {
                     )
                 }
             }
+            .safeAreaInset(edge: .bottom) {
+                VStack(spacing: 12) {
+                    TextField("Add new glocery item", text : $newItemTitle)
+                        .textFieldStyle(.plain)
+                        .padding(12)
+                        .background(.tertiary)
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                        .font(.title.weight(.light))
+                        .focused($isFocused)
+                    Button {
+                        if newItemTitle.isEmpty { return }
+                        let newItem = Item(title: newItemTitle, isCompleted: false)
+                        modelContext.insert(newItem)
+                        newItemTitle = ""
+                        isFocused = false
+                    } label : {
+                        Text("Save")
+                            .font(.title2.weight(.medium))
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.roundedRectangle)
+                    .controlSize(.extraLarge)
+                }
+                .padding()
+                .background(.bar)
+            }
+
         }
     }
 }
