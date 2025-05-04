@@ -1,5 +1,14 @@
+
+//
+//  Grocery_ListApp.swift
+//  Grocery List
+//
+//  Created by Vadim Vinogradov on 4/29/25.
+//
+
 import SwiftUI
 import SwiftData
+import TipKit
 
 struct ContentView: View {
     @Environment(\.modelContext) private var modelContext
@@ -8,6 +17,24 @@ struct ContentView: View {
     @State private var newItemTitle: String = ""
     
     @FocusState private var isFocused: Bool
+    
+    let buttonTip = ButtonTip()
+    
+    func setupTips() {
+        do {
+            try Tips.resetDatastore()
+            Tips.showAllTipsForTesting()
+            try Tips.configure([
+                .displayFrequency(.immediate)
+            ])
+        } catch {
+            print("Error initializing tips: \(error.localizedDescription)")
+        }
+    }
+    
+    init() {
+        setupTips()
+    }
     
     func addEssentialFoods() {
         let foods = [
@@ -56,8 +83,9 @@ struct ContentView: View {
                 if items.isEmpty {
                     ToolbarItem(placement: .topBarTrailing) {
                         Button(action: addEssentialFoods) {
-                            Label("Essential Foods", systemImage: "carrot")
+                            Image(systemName: "carrot")
                         }
+                        .popoverTip(buttonTip)
                     }
                 }
             }
@@ -69,7 +97,7 @@ struct ContentView: View {
                         description: Text("Add some items to your cart")
                     )
                 }
-            }
+            } 
             .safeAreaInset(edge: .bottom) {
                 VStack(spacing: 12) {
                     TextField("Add new glocery item", text : $newItemTitle)
